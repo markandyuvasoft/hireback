@@ -216,7 +216,6 @@ export const fetchDeshboardDetails = async (req, res) => {
         const totalDepositAmount = deposits.reduce((total, deposit) => total + deposit.amountUSD, 0); 
 
 
-        if (project_details.length > 0 || totalServices > 0) {
 
             res.status(200).json({
                 message: "deshboard details",
@@ -225,13 +224,8 @@ export const fetchDeshboardDetails = async (req, res) => {
                 totalDepositAmount: totalDepositAmount,
                 totalCreatedTask : totalCreatedTask
             })
-        }
 
-        else {
-            res.status(404).json({
-                message: "not found details"
-            })
-        }
+       
 
     } catch (error) {
         res.status(500).json({
