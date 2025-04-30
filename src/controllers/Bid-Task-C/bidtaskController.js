@@ -70,7 +70,8 @@ export const createBid = async (req, res) => {
 
     } catch (error) {
         res.status(500).json({
-            message: "Internal server error"
+            message: "Internal server error",
+            msg:error.message
         });
     }
 };
