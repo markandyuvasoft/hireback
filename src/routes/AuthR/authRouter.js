@@ -33,7 +33,7 @@ authRouter.delete("/deleteEducation/:authId/:educationId", deleteEduction)
 
 authRouter.post("/contactUs", contactUs)
 
-authRouter.patch("/updateAuthProfileImage/:authId",upload.single("authProfile"), updateAuthImage)
+authRouter.patch("/updateAuthProfileImage/:authId",upload.fields([ { name: "authProfile", maxCount: 1 } ]), updateAuthImage)
 
 
 authRouter.get("addtoken", saveDeviceToken)

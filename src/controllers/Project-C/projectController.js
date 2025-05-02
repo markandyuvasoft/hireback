@@ -5,7 +5,15 @@ import Draft from "../../models/Draft-M/draftSchema.js";
 import Project from "../../models/Project-M/projectSchema.js";
 import Service from "../../models/Service-M/serviceSchema.js";
 import TaskSubcategory from "../../models/Task-M/Task-subcategory/task-subcategory-schema.js";
+import { v2 as cloudinary } from "cloudinary";
+import dotenv from "dotenv";
+dotenv.config();
 
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
 // get the single service quote use serviceId
 export const found_service_quote = async (req, res) => {
@@ -53,30 +61,130 @@ export const found_service_quote = async (req, res) => {
 
 
 // update messages and files on project quote
-export const updateServiceQuote = async (req, res) => {
+// export const updateServiceQuote = async (req, res) => {
 
+//     try {
+//         const { projectId, authId } = req.params;
+//         const { message } = req.body;
+
+//         //isse old image null nhi hogi jab select nhi karoge jab
+//         // const quoteFileNames = req.files && req.files.length > 0
+//         //     ? req.files.map(({ filename }) => filename)
+//         //     : [];
+
+
+//           let quoteFileNames = {}; 
+        
+//                 if (req.files && req.files.quoteFileNames && Array.isArray(req.files.quoteFileNames) && req.files.quoteFileNames.length > 0) {
+//                     const uploadResults = [];
+//                     for (const file of req.files.quoteFileNames) {
+//                         const quoteFileNamesUpload = await cloudinary.uploader.upload(
+//                             file.path,
+//                             {
+//                                 folder: "cover_blogs",
+//                                 overwrite: false,
+//                             }
+//                         );
+//                         uploadResults.push(quoteFileNamesUpload.secure_url);
+//                         if (!quoteFileNames.public_id && uploadResults.length > 0) {
+//                             quoteFileNames.public_id = `service_${Date.now()}`; 
+//                         }
+//                     }
+//                     quoteFileNames.url = uploadResults;
+//                 } else if (req.body.oldquoteFileNames) {
+//                     quoteFileNames.url = Array.isArray(req.body.oldquoteFileNames)
+//                         ? req.body.oldquoteFileNames
+//                         : [req.body.oldquoteFileNames];
+//                     quoteFileNames.public_id = req.body.oldServiceImagePublicId || null;
+//                 } else {
+//                     const existingService = await Service.findById(projectId);
+//                     if (existingService && existingService.quoteFileNames) {
+//                         quoteFileNames = { ...existingService.quoteFileNames }; 
+//                     }
+//                 }
+
+
+//         const checkProject = await Project.findOne({ _id: projectId });
+//         if (!checkProject) {
+//             return res.status(404).json({
+//                 message: "Project not found"
+//             });
+//         }
+
+//         const updateData = {
+//             $push: { messages: { message, messagerId: authId } }
+//         };
+
+//         if (quoteFileNames.length > 0) {
+//             updateData.$push.uploadfiles = { quotefileName: quoteFileNames, uploaderId: authId };
+//         }
+
+//         const addOn = await Project.findOneAndUpdate(
+//             { _id: projectId },
+//             updateData,
+//             { new: true }
+//         );
+
+//         if (addOn) {
+//             res.status(200).json({
+//                 message: "Updated quotes successfully"
+//             });
+
+//         } else {
+//             res.status(404).json({
+//                 message: "Project quote update failed"
+//             });
+//         }
+//     } catch (error) {
+//         res.status(500).json({
+//             message: "Internal server error"
+//         });
+//     }
+
+// }
+
+export const updateServiceQuote = async (req, res) => {
     try {
         const { projectId, authId } = req.params;
         const { message } = req.body;
 
-        //isse old image null nhi hogi jab select nhi karoge jab
-        const quoteFileNames = req.files && req.files.length > 0
-            ? req.files.map(({ filename }) => filename)
-            : [];
+        let quoteFileNames = { url: [], public_id: null };
 
+        if (req.files && req.files.quoteFileNames && Array.isArray(req.files.quoteFileNames) && req.files.quoteFileNames.length > 0) {
+            const uploadResults = [];
+            for (const file of req.files.quoteFileNames) {
+                const quoteFileNamesUpload = await cloudinary.uploader.upload(
+                    file.path,
+                    { folder: "cover_blogs", overwrite: false }
+                );
+                uploadResults.push(quoteFileNamesUpload.secure_url);
+                if (!quoteFileNames.public_id && uploadResults.length > 0) {
+                    quoteFileNames.public_id = `project_${Date.now()}`; // More specific public_id
+                }
+            }
+            quoteFileNames.url = uploadResults;
+        } else if (req.body.oldquoteFileNamesUrls) {
+            quoteFileNames.url = Array.isArray(req.body.oldquoteFileNamesUrls)
+                ? req.body.oldquoteFileNamesUrls
+                : [req.body.oldquoteFileNamesUrls];
+            quoteFileNames.public_id = req.body.oldquoteFileNamesPublicId || null;
+        } else {
+            const existingProject = await Project.findById(projectId);
+            if (existingProject && existingProject.uploadfiles && existingProject.uploadfiles.length > 0 && existingProject.uploadfiles[0].quotefileName) {
+                quoteFileNames = { url: existingProject.uploadfiles[0].quotefileName.url || [], public_id: existingProject.uploadfiles[0].quotefileName.public_id || null };
+            }
+        }
 
         const checkProject = await Project.findOne({ _id: projectId });
         if (!checkProject) {
-            return res.status(404).json({
-                message: "Project not found"
-            });
+            return res.status(404).json({ message: "Project not found" });
         }
 
         const updateData = {
             $push: { messages: { message, messagerId: authId } }
         };
 
-        if (quoteFileNames.length > 0) {
+        if (quoteFileNames.url && quoteFileNames.url.length > 0) {
             updateData.$push.uploadfiles = { quotefileName: quoteFileNames, uploaderId: authId };
         }
 
@@ -87,22 +195,14 @@ export const updateServiceQuote = async (req, res) => {
         );
 
         if (addOn) {
-            res.status(200).json({
-                message: "Updated quotes successfully"
-            });
-
+            res.status(200).json({ message: "Updated quotes successfully", addOn });
         } else {
-            res.status(404).json({
-                message: "Project quote update failed"
-            });
+            res.status(404).json({ message: "Project quote update failed" });
         }
     } catch (error) {
-        res.status(500).json({
-            message: "Internal server error"
-        });
+        res.status(500).json({ message: error.message});
     }
-
-}
+};
 
 
 

@@ -5,7 +5,7 @@ import { upload } from "../../../common/image.js";
 
 const taskSubcategoryRouter = express.Router()
 
-taskSubcategoryRouter.post("/createTask/:authId",upload.single("task_logo"), createTaskSubCategory)
+taskSubcategoryRouter.post("/createTask/:authId",upload.fields([ { name: "task_logo", maxCount: 1 } ]), createTaskSubCategory)
 
 taskSubcategoryRouter.get("/all-popular-task", getAllTask)
 
@@ -17,7 +17,7 @@ taskSubcategoryRouter.get("/searchTask", searchTasks)
 
 taskSubcategoryRouter.get("/singleTask/:taskId", found_single_task)
 
-taskSubcategoryRouter.put("/update-task/:taskId",upload.single("task_logo"), updateTask)
+taskSubcategoryRouter.put("/update-task/:taskId",upload.fields([ { name: "task_logo", maxCount: 1 } ]), updateTask)
 
 taskSubcategoryRouter.delete("/delete-task/:taskId", deleteTask)
 

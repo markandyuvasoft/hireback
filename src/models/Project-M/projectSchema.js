@@ -1,74 +1,73 @@
 import mongoose from "mongoose";
 
-
-const projectSchema = new mongoose.Schema({
-
+const projectSchema = new mongoose.Schema(
+  {
     order_quotes: {
-        type: String
+      type: String,
     },
 
     serviceId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Service"
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Service",
     },
 
     authId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Auth"
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Auth",
     },
 
     serviceAuthId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Auth"
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Auth",
     },
 
     messages: [
-        {
+      {
+        message: {
+          type: String,
+        },
+        messagerId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Auth",
+        },
 
-            message: {
-                type: String
-            },
-            messagerId: {
-                type: mongoose.Schema.Types.ObjectId,
-                ref: "Auth"
-            },
-
-            createdAt: {
-                type: Date,
-                default: Date.now
-            }
-        }
+        createdAt: {
+          type: Date,
+          default: Date.now,
+        },
+      },
     ],
 
     uploadfiles: [
-        {
-            quotefileName: {
-                type: Array
-            },
-            uploaderId: {
-                type: mongoose.Schema.Types.ObjectId,
-                ref: "Auth"
-            },
-            createdAt: {
-                type: Date,
-                default: Date.now
-            }
-        }
+      {
+        quotefileName: {
+          url: [{ type: String }],
+          public_id: { type: String },
+        },
+        uploaderId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Auth",
+        },
+        createdAt: {
+          type: Date,
+          default: Date.now,
+        },
+      },
     ],
 
     dead_line: {
-        type: String,
-        default: "Expected deadline will come after accepting the order."
+      type: String,
+      default: "Expected deadline will come after accepting the order.",
     },
 
     status: {
-        type: String,
-        default: "Pending"
-    }
+      type: String,
+      default: "Pending",
+    },
+  },
+  { timestamps: true }
+);
 
-}, { timestamps: true })
+const Project = mongoose.model("Project", projectSchema);
 
-
-const Project = mongoose.model("Project", projectSchema)
-
-export default Project
+export default Project;

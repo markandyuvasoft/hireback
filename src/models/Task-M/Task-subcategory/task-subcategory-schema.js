@@ -21,7 +21,8 @@ const taskSubCategorySchema = new mongoose.Schema({
     },
 
     task_logo: {
-        type: String
+        url: { type: String },
+        public_id: { type: String }
     },
 
     taskVerify: {

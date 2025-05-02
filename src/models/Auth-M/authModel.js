@@ -73,8 +73,8 @@ const authSchema = new mongoose.Schema({
     }],
 
     authProfile : {
-        type : String,
-        default : "auth5.jpg"
+        url: { type: String },
+        public_id: { type: String }
     },
 
     otp : {

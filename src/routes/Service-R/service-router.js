@@ -4,7 +4,7 @@ import { upload } from "../../common/image.js"
 
 const serviceRouter = express.Router()
 
-serviceRouter.post("/create-service/:authId",upload.array("servicePoster", 3), createService)
+serviceRouter.post("/create-service/:authId", upload.fields([{ name: "serviceImage", maxCount: 3 }]), createService);
 
 serviceRouter.get("/single-service/:serviceId", getSingleService)
 
@@ -31,12 +31,12 @@ serviceRouter.get("/clientReview", clientReview)
 
 serviceRouter.get("/choose_service/:authId", get_service_user_According_for_service_page)
 
-serviceRouter.put("/update-service/:serviceId",upload.array("servicePoster", 3), update_services)
+serviceRouter.put("/update-service/:serviceId", upload.fields([{ name: "serviceImage", maxCount: 3 }]), update_services)
 
 
 serviceRouter.get("/draft_details/:authId", get_service_draft_According)
 
-serviceRouter.put("/update-service-draft/:draftId",upload.array("serviceImage", 3), update_services_draft)
+serviceRouter.put("/update-service-draft/:draftId", upload.fields([{ name: "serviceImage", maxCount: 3 }]), update_services_draft)
 
 
 serviceRouter.put("/update-service-public/:draftId", update_services_draft_to_public)

@@ -4,7 +4,15 @@ import bcrypt from "bcrypt"
 import jwt from "jsonwebtoken"
 import nodemailer from 'nodemailer';
 import crypto from 'crypto';
+import { v2 as cloudinary } from "cloudinary";
+import dotenv from "dotenv";
+dotenv.config();
 
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
 export const temp = async (req, res) => {
 
@@ -551,9 +559,21 @@ export const updateAuthImage = async (req, res) => {
     try {
         const { authId } = req.params
 
-        // const authProfile = req.file ? req.file.filename : null
+        // const authProfile = req.file ? req.file.filename : req.body.authProfile ? req.body.oldImage : null;
 
-        const authProfile = req.file ? req.file.filename : req.body.authProfile ? req.body.oldImage : null;
+        let authProfile =''
+
+    if (req.files && req.files.authProfile) {
+        const authProfileUpload = await cloudinary.uploader.upload(
+          req.files.authProfile[0].path,
+          {
+            folder: "user_profiles",
+            public_id: `profile_${authId}`,
+            overwrite: true,
+          }
+        );
+        authProfile = authProfileUpload.secure_url;
+      }
 
 
         const checkAuth = await Auth.findOne({ _id: authId })
@@ -576,6 +596,7 @@ export const updateAuthImage = async (req, res) => {
 
     } catch (error) {
         res.status(500).json({
+            error : error.message,
             message: "internal server error"
         })
     }

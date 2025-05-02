@@ -4,7 +4,8 @@ import mongoose from "mongoose";
 const taskfileSchema = new mongoose.Schema({
 
     uploadFiles: {
-        type: String
+        url: { type: String },
+        public_id: { type: String }
     },
 
     taskId: {

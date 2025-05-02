@@ -12,7 +12,8 @@ const blogSchema = new mongoose.Schema({
     },
 
     blog_image : {
-        type : String
+        url: { type: String },
+        public_id: { type: String }
     }
 
 },{timestamps : true})

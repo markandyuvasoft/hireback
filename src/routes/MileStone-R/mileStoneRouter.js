@@ -10,7 +10,9 @@ mileStoneRouter.get("/found-milestone-task/:taskId/:loginAuthId", deatils_On_Tas
 
 mileStoneRouter.get("/invoice/:milestoneId", createStripeInvoiceForMilestone)
 
-mileStoneRouter.post("/uploadTaskFile/:loginAuthId/:taskCreatorId",upload.single("uploadFiles"), uploadTaskFiles)
+mileStoneRouter.post("/uploadTaskFile/:loginAuthId/:taskCreatorId",upload.fields([
+    { name: "uploadFiles", maxCount: 1 }
+  ]), uploadTaskFiles)
 
 mileStoneRouter.get("/found-upload-files/:loginAuthId/:taskCreatorId", getUploadedFiles)
 

@@ -9,7 +9,7 @@ projectRouter.post("/createProject/:authId/:serviceId", createProject)
 
 projectRouter.get("/service-quote/:projectId", found_service_quote)
 
-projectRouter.put("/updated-quote/:projectId/:authId", upload.array("quotefileName", 5), updateServiceQuote)
+projectRouter.put("/updated-quote/:projectId/:authId",  upload.fields([{ name: "quoteFileNames", maxCount: 5 }]), updateServiceQuote)
 
 projectRouter.delete("/delete-message/:authId/:messageId", deleteQuoteMessages)
 

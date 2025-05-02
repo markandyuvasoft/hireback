@@ -4,8 +4,18 @@ import MileStone from "../../models/MileStone-M/mileStoneSchema.js";
 import TaskFile from "../../models/TASK-FILE-M/TaskFileSchema.js";
 import TaskSubcategory from "../../models/Task-M/Task-subcategory/task-subcategory-schema.js";
 import Stripe from "stripe"
+import { v2 as cloudinary } from "cloudinary";
 import dotenv from "dotenv"
 dotenv.config()
+
+
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
 
 var s = process.env.stripeSecret;
 const stripe = new Stripe(s)
@@ -233,10 +243,25 @@ export const createStripeInvoiceForMilestone = async (req, res) => {
 
 
 export const uploadTaskFiles = async (req, res) => {
+
     try {
         const { loginAuthId, taskCreatorId } = req.params;
 
-        const uploadFiles = req.file ? req.file.filename : null;
+        // const uploadFiles = req.file ? req.file.filename : null;
+
+
+         let uploadFiles = null;
+         
+            if (req.files && req.files.uploadFiles) {
+              const uploadFilesUpload = await cloudinary.uploader.upload(
+                req.files.uploadFiles[0].path,
+                {
+                  folder: "cover_blogs",
+                  overwrite: false,
+                }
+              );
+              uploadFiles = uploadFilesUpload;
+            }
 
         const saveFile = new TaskFile({
             loginAuthId,

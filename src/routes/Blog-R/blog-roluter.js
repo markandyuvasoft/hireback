@@ -4,7 +4,9 @@ import { upload } from "../../common/image.js"
 
 const blogRouter = express.Router()
 
-blogRouter.post("/uploadBlog",upload.single("BlogPoster"), createBlog)
+blogRouter.post("/uploadBlog", upload.fields([
+    { name: "blog_image", maxCount: 1 }
+  ]), createBlog)
 
 blogRouter.get("/single-blog/:blogId", get_single_blog)
 

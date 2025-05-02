@@ -1,6 +1,16 @@
 import Draft from "../../models/Draft-M/draftSchema.js";
 import Portfolio from "../../models/Portfolio-M/portfolioSchema.js";
 import Service from "../../models/Service-M/serviceSchema.js";
+import { v2 as cloudinary } from "cloudinary";
+import dotenv from "dotenv";
+dotenv.config();
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
 
 
 export const createService = async (req, res) => {
@@ -10,12 +20,26 @@ export const createService = async (req, res) => {
 
         const { sub_categoryId, title, description, categoryId, about_Gig, requirement, searchTags, in_publish, FAQ, Basic_price, Standard_price, Premium_price } = req.body
 
-        // const serviceImage = req.files.map(({ filename }) => `${filename}`) 
+        
+        let serviceImage = { url: [], public_id: null };
 
-        const serviceImage = req.files && req.files.length > 0
-            ? req.files.map(({ filename }) => filename)
-            : [];
-
+        if (req.files && req.files.serviceImage && Array.isArray(req.files.serviceImage) && req.files.serviceImage.length > 0) {
+            const uploadResults = [];
+            for (const file of req.files.serviceImage) {
+                const serviceImageUpload = await cloudinary.uploader.upload(
+                    file.path,
+                    {
+                        folder: "cover_blogs",
+                        overwrite: false,
+                    }
+                );
+                uploadResults.push(serviceImageUpload.secure_url);
+                if (!serviceImage.public_id && uploadResults.length > 0) {
+                    serviceImage.public_id = `service_${Date.now()}`;
+                }
+            }
+            serviceImage.url = uploadResults;
+        }
 
         const checkService = await Service.findOne({ title })
 
@@ -35,10 +59,6 @@ export const createService = async (req, res) => {
             })
 
             await newService.save()
-
-            // if (in_publish === "public") {
-            //     await Draft.deleteOne({ authId, title });
-            // }
 
             res.status(200).json({
                 message: "created a new service",
@@ -323,7 +343,9 @@ export const search_service_by_title = async (req, res) => {
         }
 
         const services = await Service.find({
-            title: { $regex: title, $options: 'i' }
+            // title: { $regex: title, $options: 'i' }
+      title : { $regex: `\\b${title}\\b`, $options: "i" }
+
 
         }).select('-about_Gig -requirement -sub_categoryId -categoryId')
             .populate({
@@ -793,9 +815,35 @@ export const update_services = async (req, res) => {
         const { sub_categoryId, title, description, categoryId, about_Gig, requirement, searchTags, in_publish, FAQ, Basic_price, Standard_price, Premium_price } = req.body
 
 
-        const serviceImage = req.files && req.files.length > 0
-        ? req.files.map(({ filename }) => filename)
-        : [];   
+        let serviceImage = {}; 
+
+        if (req.files && req.files.serviceImage && Array.isArray(req.files.serviceImage) && req.files.serviceImage.length > 0) {
+            const uploadResults = [];
+            for (const file of req.files.serviceImage) {
+                const serviceImageUpload = await cloudinary.uploader.upload(
+                    file.path,
+                    {
+                        folder: "cover_blogs",
+                        overwrite: false,
+                    }
+                );
+                uploadResults.push(serviceImageUpload.secure_url);
+                if (!serviceImage.public_id && uploadResults.length > 0) {
+                    serviceImage.public_id = `service_${Date.now()}`; 
+                }
+            }
+            serviceImage.url = uploadResults;
+        } else if (req.body.oldServiceImageUrls) {
+            serviceImage.url = Array.isArray(req.body.oldServiceImageUrls)
+                ? req.body.oldServiceImageUrls
+                : [req.body.oldServiceImageUrls];
+            serviceImage.public_id = req.body.oldServiceImagePublicId || null;
+        } else {
+            const existingService = await Service.findById(serviceId);
+            if (existingService && existingService.serviceImage) {
+                serviceImage = { ...existingService.serviceImage }; 
+            }
+        }
 
 
         const checkService = await Service.findOne({ _id: serviceId })
@@ -823,7 +871,7 @@ export const update_services = async (req, res) => {
 
     } catch (error) {
         res.status(500).json({
-            message: error.message
+            message: error
         })
     }
 }
@@ -947,10 +995,40 @@ export const update_services_draft = async (req, res) => {
                 message: "Not found service draft"
             });
         }
-        let serviceImage = checkService.serviceImage; // existing images
 
-        if (req.files && req.files.length > 0) {
-            serviceImage = req.files.map(({ filename }) => filename);
+        
+        let serviceImage = {}; // Initialize as an empty object
+
+        // Check if new files are uploaded
+        if (req.files && req.files.serviceImage && Array.isArray(req.files.serviceImage) && req.files.serviceImage.length > 0) {
+            const uploadResults = [];
+            for (const file of req.files.serviceImage) {
+                const serviceImageUpload = await cloudinary.uploader.upload(
+                    file.path,
+                    {
+                        folder: "cover_blogs",
+                        overwrite: false,
+                    }
+                );
+                uploadResults.push(serviceImageUpload.secure_url);
+                // Consider how to handle public_id updates if needed
+                if (!serviceImage.public_id && uploadResults.length > 0) {
+                    serviceImage.public_id = `service_${Date.now()}`; // Example, adjust as needed
+                }
+            }
+            serviceImage.url = uploadResults;
+        } else if (req.body.oldServiceImageUrls) {
+            // If no new images, but old image URLs are provided, use them
+            serviceImage.url = Array.isArray(req.body.oldServiceImageUrls)
+                ? req.body.oldServiceImageUrls
+                : [req.body.oldServiceImageUrls];
+            serviceImage.public_id = req.body.oldServiceImagePublicId || null; // If you're also tracking public_id
+        } else {
+            // If no new images and no old image URLs in the body, fetch the existing ones
+            const existingService = await Draft.findById(draftId);
+            if (existingService && existingService.serviceImage) {
+                serviceImage = { ...existingService.serviceImage }; // Copy the existing image object
+            }
         }
 
         const updatedDraft = await Draft.findOneAndUpdate(
