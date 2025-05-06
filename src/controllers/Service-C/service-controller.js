@@ -159,7 +159,7 @@ export const perticular_sub_cat_service = async (req, res) => {
         const { sub_categoryId } = req.params;
         const { bestRating, bestReviewed, title, minRating, maxRating } = req.query;
 
-        let services = await Service.find({ sub_categoryId }).populate('ratings.reviewerId', 'firstName')
+        let services = await Service.find({ sub_categoryId }).populate('ratings.reviewerId', 'firstName authProfile')
             .select("-about_Gig -requirement")
             .populate({
                 path: "sub_categoryId",
@@ -350,7 +350,7 @@ export const search_service_by_title = async (req, res) => {
         }).select('-about_Gig -requirement -sub_categoryId -categoryId')
             .populate({
                 path: "authId",
-                select: "firstName lastName"
+                select: "firstName lastName authProfile"
             }).populate({
                 path: "sub_categoryId",
                 select: "feature_SubCategories_name"
@@ -525,7 +525,7 @@ export const popular_review_rating = async (req, res) => {
         const { categoryId } = req.params;
         const { bestRating, bestReviewed, title, minRating, maxRating } = req.query;
 
-        let services = await Service.find({ categoryId }).populate('ratings.reviewerId', 'firstName')
+        let services = await Service.find({ categoryId }).populate('ratings.reviewerId', 'firstName authProfile')
             .select("-about_Gig -requirement")
             .populate({
                 path: "sub_categoryId",
@@ -997,40 +997,41 @@ export const update_services_draft = async (req, res) => {
         }
 
         
-        let serviceImage = {}; // Initialize as an empty object
-
-        // Check if new files are uploaded
-        if (req.files && req.files.serviceImage && Array.isArray(req.files.serviceImage) && req.files.serviceImage.length > 0) {
-            const uploadResults = [];
-            for (const file of req.files.serviceImage) {
-                const serviceImageUpload = await cloudinary.uploader.upload(
-                    file.path,
-                    {
-                        folder: "cover_blogs",
-                        overwrite: false,
-                    }
-                );
-                uploadResults.push(serviceImageUpload.secure_url);
-                // Consider how to handle public_id updates if needed
-                if (!serviceImage.public_id && uploadResults.length > 0) {
-                    serviceImage.public_id = `service_${Date.now()}`; // Example, adjust as needed
-                }
-            }
-            serviceImage.url = uploadResults;
-        } else if (req.body.oldServiceImageUrls) {
-            // If no new images, but old image URLs are provided, use them
-            serviceImage.url = Array.isArray(req.body.oldServiceImageUrls)
-                ? req.body.oldServiceImageUrls
-                : [req.body.oldServiceImageUrls];
-            serviceImage.public_id = req.body.oldServiceImagePublicId || null; // If you're also tracking public_id
-        } else {
-            // If no new images and no old image URLs in the body, fetch the existing ones
-            const existingService = await Draft.findById(draftId);
-            if (existingService && existingService.serviceImage) {
-                serviceImage = { ...existingService.serviceImage }; // Copy the existing image object
-            }
+        let serviceImage = { url: [], public_id: null };
+        // Add old images
+        if (req.body.oldServiceImageUrls) {
+          if (Array.isArray(req.body.oldServiceImageUrls)) {
+            serviceImage.url = serviceImage.url.concat(req.body.oldServiceImageUrls);
+          } else {
+            serviceImage.url.push(req.body.oldServiceImageUrls);
+          }
         }
-
+        // Add new images
+        if (
+          req.files &&
+          req.files.serviceImage &&
+          Array.isArray(req.files.serviceImage) &&
+          req.files.serviceImage.length > 0
+        ) {
+          for (const file of req.files.serviceImage) {
+            const serviceImageUpload = await cloudinary.uploader.upload(file.path, {
+              folder: "cover_blogs",
+              overwrite: false,
+            });
+            serviceImage.url.push(serviceImageUpload.secure_url);
+            if (!serviceImage.public_id) {
+              serviceImage.public_id = `service_${Date.now()}`;
+            }
+          }
+        }
+        // If nothing, fallback to existing
+        if (serviceImage.url.length === 0) {
+          const existingService = await Draft.findById(draftId);
+          if (existingService && existingService.serviceImage) {
+            serviceImage = { ...existingService.serviceImage };
+          }
+        }
+        
         const updatedDraft = await Draft.findOneAndUpdate(
             { _id: draftId },
             {
@@ -1147,3 +1148,90 @@ export const get_service_draft_According_all = async (req, res) => {
         })
     }
 }
+
+
+
+
+export const update_services_public_image = async (req, res) => {
+
+
+    try {
+        const { serviceId } = req.params;
+
+        const { sub_categoryId, title, description, categoryId, about_Gig, requirement, searchTags, in_publish } = req.body;
+
+        // const { sub_categoryId, title, description, categoryId, about_Gig, requirement, searchTags, in_publish, Basic_price, Standard_price, Premium_price,FAQ } = req.body;
+
+      
+
+        const Basic_price = JSON.parse(req.body.Basic_price);
+        const Standard_price = JSON.parse(req.body.Standard_price);
+        const Premium_price = JSON.parse(req.body.Premium_price);
+        const FAQ = JSON.parse(req.body.FAQ);
+
+
+        const checkService = await Service.findOne({ _id: serviceId });
+
+        if (!checkService) {
+            return res.status(404).json({
+                message: "Not found service Service"
+            });
+        }
+
+        
+        let serviceImage = { url: [], public_id: null };
+        // Add old images
+        if (req.body.oldServiceImageUrls) {
+          if (Array.isArray(req.body.oldServiceImageUrls)) {
+            serviceImage.url = serviceImage.url.concat(req.body.oldServiceImageUrls);
+          } else {
+            serviceImage.url.push(req.body.oldServiceImageUrls);
+          }
+        }
+        // Add new images
+        if (
+          req.files &&
+          req.files.serviceImage &&
+          Array.isArray(req.files.serviceImage) &&
+          req.files.serviceImage.length > 0
+        ) {
+          for (const file of req.files.serviceImage) {
+            const serviceImageUpload = await cloudinary.uploader.upload(file.path, {
+              folder: "cover_blogs",
+              overwrite: false,
+            });
+            serviceImage.url.push(serviceImageUpload.secure_url);
+            if (!serviceImage.public_id) {
+              serviceImage.public_id = `service_${Date.now()}`;
+            }
+          }
+        }
+        // If nothing, fallback to existing
+        if (serviceImage.url.length === 0) {
+          const existingService = await Service.findById(serviceId);
+          if (existingService && existingService.serviceImage) {
+            serviceImage = { ...existingService.serviceImage };
+          }
+        }
+        
+        const updatedDraft = await Service.findOneAndUpdate(
+            { _id: serviceId },
+            {
+                $set: {
+                    sub_categoryId, title, description, categoryId, about_Gig, requirement, searchTags, in_publish, FAQ, Basic_price, Standard_price, Premium_price, serviceImage
+                }
+            },
+            { new: true }
+        );
+
+        return res.status(200).json({
+            message: "Service updated successfully",
+            updatedDraft
+        });
+
+    } catch (error) {
+        res.status(500).json({
+            message: error.message
+        });
+    }
+};

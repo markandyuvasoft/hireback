@@ -64,6 +64,10 @@ const projectSchema = new mongoose.Schema(
       type: String,
       default: "Pending",
     },
+
+    quotePrice : {
+      type : String
+    }
   },
   { timestamps: true }
 );

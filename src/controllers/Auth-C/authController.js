@@ -45,7 +45,8 @@ export const temp = async (req, res) => {
         await tempUser.save();
 
         res.status(200).json({
-            message: "temporary registration"
+            message: "temporary registration",
+            tempUser
         });
 
     } catch (error) {
@@ -591,7 +592,8 @@ export const updateAuthImage = async (req, res) => {
         );
 
         res.status(200).json({
-            message: "Profile image updated successfully"
+            message: "Profile image updated successfully",
+            updatedUser
         });
 
     } catch (error) {

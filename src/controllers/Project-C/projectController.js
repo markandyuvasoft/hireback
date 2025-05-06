@@ -24,7 +24,7 @@ export const found_service_quote = async (req, res) => {
         const checkService = await Project.findOne({ _id: projectId })
             .populate({
                 path: "serviceId",
-                select: "serviceImage title Basic_price.b_price authId"
+                select: "serviceImage title Basic_price.b_price Premium_price.p_price Standard_price.s_price authId"
             })
             .populate({
                 path: "authId",
@@ -341,7 +341,7 @@ export const createProject = async (req, res) => {
     try {
         const { authId, serviceId } = req.params;
 
-        const { order_quotes, dead_line, status } = req.body;
+        const { order_quotes, dead_line, status, quotePrice } = req.body;
 
         // Check if the service exists
         const checkService = await Service.findById(serviceId);
@@ -364,6 +364,7 @@ export const createProject = async (req, res) => {
             authId,
             dead_line,
             status,
+            quotePrice,
             serviceAuthId: checkService.authId, // Owner of the service
         });
 

@@ -1,5 +1,5 @@
 import express from "express"
-import { clientReview, compare_package, createService, get_service_draft_According, get_service_draft_According_all, get_service_user_According, get_service_user_According_for_service_page, getSingleService, perticular_sub_cat_service, popular_review_rating, review_and_rating, search_service_by_title, service_category_according, service_FAQ, service_Price, update_services, update_services_draft, update_services_draft_to_public } from "../../controllers/Service-C/service-controller.js"
+import { clientReview, compare_package, createService, get_service_draft_According, get_service_draft_According_all, get_service_user_According, get_service_user_According_for_service_page, getSingleService, perticular_sub_cat_service, popular_review_rating, review_and_rating, search_service_by_title, service_category_according, service_FAQ, service_Price, update_services, update_services_draft, update_services_draft_to_public, update_services_public_image } from "../../controllers/Service-C/service-controller.js"
 import { upload } from "../../common/image.js"
 
 const serviceRouter = express.Router()
@@ -37,6 +37,8 @@ serviceRouter.put("/update-service/:serviceId", upload.fields([{ name: "serviceI
 serviceRouter.get("/draft_details/:authId", get_service_draft_According)
 
 serviceRouter.put("/update-service-draft/:draftId", upload.fields([{ name: "serviceImage", maxCount: 3 }]), update_services_draft)
+
+serviceRouter.put("/update_services_public_image/:serviceId", upload.fields([{ name: "serviceImage", maxCount: 3 }]), update_services_public_image)
 
 
 serviceRouter.put("/update-service-public/:draftId", update_services_draft_to_public)

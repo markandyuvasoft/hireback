@@ -27,7 +27,8 @@ const draftSchema = new mongoose.Schema({
     },
 
     serviceImage: {
-        type: Array
+        url: [{ type: String }], 
+        public_id: { type: String } 
     },
 
     about_Gig: {
